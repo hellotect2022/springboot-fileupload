@@ -25,7 +25,10 @@
             <input type="button" id="btnSubmitMulti" value="멀티 파일 업로드"/>
         </form>
     </div>
-
+    <br>
+    <div id="uploaded-area" style="border: 2px solid black;width: 100%; height:100px">
+        <p>uploaded files here</p>
+    </div>
     <div>
         <h1>멀티파일 드래그 앤 드롭 업로드</h1>
         <form method="post" enctype="multipart/form-data" id="multipart2" class="my-form">
@@ -92,7 +95,9 @@
                 success: function (data) { 
                     alert(data);           
                     $("#btnSubmit").prop("disabled", false);  
-                    initialize();    
+                    createUploadedFiles();   
+                    initialize(); 
+                    
                 },          
                 error: function (e) {  
                     console.log("ERROR : ", e);     
@@ -147,6 +152,40 @@
             uploadFiles = [];
             let divs = document.querySelectorAll('#drop-area div');
             divs.forEach(div => div.parentNode.removeChild(div));
+        }
+
+        function downloadFile(filename) {
+            $.ajax({             
+                type: "POST",          
+                url: "http://localhost:9000/test/download",  
+                processData: true, // data 값을 쿼리 스트링으로 변환하지 않도록 설정
+                cache: false, // 캐시 사용 안 함     
+                data: {
+                    "filename": filename  // filename 파라미터 전달
+                },                
+                //timeout: 600000,       
+                success: function (data) { 
+                    console.log('data',data)             
+                },          
+                error: function (e) {  
+                    console.log("ERROR : ", e);       
+                }     
+            });
+        }
+
+        function createUploadedFiles() {
+            let uploadedArea = document.getElementById('uploaded-area');
+            uploadedArea.textContent = '';
+            uploadFiles.forEach(file => {
+                let div = document.createElement('div');
+                div.textContent = file.name;
+                div.addEventListener('click', (e) =>{
+                    e.preventDefault();
+                    //console.log(e.target.innerHTML);
+                    downloadFile(e.target.innerHTML)
+                });
+                uploadedArea.appendChild(div);
+            });
         }
     
     </script>
