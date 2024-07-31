@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <title>upload-test</title>
+</head>
+<body>
+    <div>
+        <h1>단일파일 업로드</h1>
+        <form method="post" enctype="multipart/form-data">
+            <div>
+                file : <input type="file" name="file" id="file"/>
+            </div>
+            <input type="button" id="btnSubmit" value="단일 파일 업로드"/>
+        </form>
+    </div>
+
+    <div>
+        <h1>멀티파일 업로드</h1>
+        <form method="post" enctype="multipart/form-data" id="multipart">
+            <div>file1 : <input type="file" name="file" id="file1"/> </div>
+            <div>file2 : <input type="file" name="file" id="file2"/> </div>
+            <div>file3 : <input type="file" name="file" id="file3"/> </div>
+            <div>file4 : <input type="file" name="file" id="file4"/> </div>
+            <input type="button" id="btnSubmitMulti" value="멀티 파일 업로드"/>
+        </form>
+    </div>
+
+    <div>
+        <h1>멀티파일 드래그 앤 드롭 업로드</h1>
+        <form method="post" enctype="multipart/form-data" id="multipart2" class="my-form">
+            <input type="button" id="btnSubmitMulti2" value="멀티 파일 업로드"/>
+        </form>
+        <div id="drop-area" style="border: 2px solid black;width: 100%; height:400px">
+            <p>Drag and drop files here</p>
+        </div>
+    </div>
+    
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        
+        $("#btnSubmit").click(function (event) {
+            event.preventDefault();
+            $("#btnSubmit").prop("disabled", true); 
+            var fileInput = document.getElementById('file');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.forEach((a)=>console.log(a))
+            //console.log('formData',formData)
+            uploadFile("http://localhost:9000/test/upload",formData)
+        })
+
+        $("#btnSubmitMulti").click(function (event) {
+            event.preventDefault();
+            //$("#btnSubmitMulti").prop("disabled", true); 
+            var form = document.getElementById('multipart');
+            const formData = new FormData(form)
+            var filteredFormData = new FormData();
+                // Iterate over the formData entries
+                formData.forEach((value, key) => {
+                    // Check if the value is not empty
+                    if (value instanceof File && value.size > 0) {
+                        filteredFormData.append(key, value);
+                    }
+                });
+            uploadFile("http://localhost:9000/test/upload",filteredFormData)
+        })
+
+        $("#btnSubmitMulti2").click(function (event) {
+            event.preventDefault();
+            //$("#btnSubmitMulti").prop("disabled", true); 
+            const formData = new FormData()
+            uploadFiles.forEach(a=>{
+                console.log('list : ',a)
+                formData.append("file",a)
+            });
+            formData.forEach((a)=>console.log('formdata : ',a))
+            uploadFile("http://localhost:9000/test/upload",formData)
+        })
+
+        const uploadFile = (url,formData) => {
+            $.ajax({             
+                type: "POST",          
+                url: url,  
+                processData: false, // data 값을 쿼리 스트링으로 변환하지 않도록 설정
+                contentType: false, // formdata 가 알아서 contentType 작성해줌
+                cache: false, // 캐시 사용 안 함     
+                data: formData,                  
+                //timeout: 600000,       
+                success: function (data) { 
+                    alert(data);           
+                    $("#btnSubmit").prop("disabled", false);  
+                    initialize();    
+                },          
+                error: function (e) {  
+                    console.log("ERROR : ", e);     
+                    $("#btnSubmit").prop("disabled", false);    
+                    alert("fail");   
+                    initialize();     
+                }     
+            });
+        }
+    
+        let dropArea = document.getElementById('drop-area');
+
+        // Prevent default drag behaviors
+        ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDrop(e) {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+
+            handleFiles(files);
+        }
+
+        let uploadFiles = [];
+
+        function handleFiles(files) {
+            ([...files]).forEach(uploadFile2);
+        }
+
+        function uploadFile2(file) {
+            uploadFiles.push(file);
+            let div = document.createElement('div');
+            div.textContent = file.name;
+            dropArea.appendChild(div);
+        }
+
+        function initialize() {
+            uploadFiles = [];
+            let divs = document.querySelectorAll('#drop-area div');
+            divs.forEach(div => div.parentNode.removeChild(div));
+        }
+    
+    </script>
+</body>
+</html>
