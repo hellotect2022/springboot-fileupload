@@ -38,6 +38,7 @@
     
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="./js/file.js"></script>
     <script>
         
         $("#btnSubmit").click(function (event) {
@@ -121,7 +122,10 @@
         function handleDrop(e) {
             let dt = e.dataTransfer;
             let files = dt.files;
-
+            console.log('e',e.target.value)
+            console.log('dt',dt)
+            console.log('files',files)
+            
             handleFiles(files);
         }
 
@@ -132,6 +136,7 @@
         }
 
         function uploadFile2(file) {
+            console.log('file',file)
             uploadFiles.push(file);
             let div = document.createElement('div');
             div.textContent = file.name;
