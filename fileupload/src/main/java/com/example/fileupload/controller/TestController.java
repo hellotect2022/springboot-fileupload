@@ -10,10 +10,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.HashMap;
 
+import org.apache.tomcat.util.bcel.classfile.SimpleElementValue;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -35,15 +38,37 @@ public class TestController {
     @RequestMapping(value = "/test/upload", method = RequestMethod.POST)
     public String testUpload(@RequestParam("file") MultipartFile[] multipartFile, HttpServletResponse response) {
         String path = "D:/study_in_covision/vanilaHtml/file/";
+        long startTime = System.currentTimeMillis();
         try {
+
             File file = new File(path);
             if (!file.exists()) {
                 file.mkdirs();
             }
 
             for (MultipartFile multiFile : multipartFile) {
+                saveToFile(multiFile,path);
+            }
+            return "File Upload Success";
 
-                System.out.println(
+        } catch (Exception e) {
+            System.out.println(e);
+            return "File Upload Failed";
+        }finally {
+            // 끝 시간
+            long endTime = System.currentTimeMillis();
+            // 경과 시간 계산 (밀리초 단위)
+            long elapsedTime = endTime - startTime;
+            // 밀리초를 초 단위로 변환 (필요한 경우)
+            double elapsedTimeInSeconds = elapsedTime / 1000.0;
+            System.out.println("경과 시간: " + elapsedTime + " 밀리초");
+            System.out.println("경과 시간: " + elapsedTimeInSeconds + " 초");
+        }
+    };
+
+    @Async
+    private void saveToFile(MultipartFile multiFile, String path) throws IOException {
+        System.out.println(
                         String.format("multipartFile.getContentType() : %s,\r\n" +
                                 "multipartFile.getOriginalFilename() : %s ,\r\n" +
                                 "multipartFile.getBytes() : %s",
@@ -54,15 +79,8 @@ public class TestController {
                 FileOutputStream outputStream = new FileOutputStream(path + multiFile.getOriginalFilename());
                 outputStream.write(multiFile.getBytes());
                 outputStream.close();
-            }
-            return "File Upload Success";
+    }
 
-        } catch (Exception e) {
-            System.out.println(e);
-            return "File Upload Failed";
-        }
-
-    };
 
     @RequestMapping(value = "/test/download", method = RequestMethod.GET)
     public void testDownload(@RequestParam("filename") String filename, HttpServletResponse response,
@@ -109,8 +127,8 @@ public class TestController {
 
         byte[] imageBytes = Files.readAllBytes(file.toPath());
         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-        System.out.println("imageBytes : "+imageBytes);
-        System.out.println("base64Image : "+base64Image);
+        //System.out.println("imageBytes : "+imageBytes);
+        //System.out.println("base64Image : "+base64Image);
         String returnString = "data:" + mimeType + ";base64," + base64Image;
         HashMap<String, String> map = new HashMap<String, String>();
         map.put("url", returnString);
