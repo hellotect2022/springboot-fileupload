@@ -5,37 +5,13 @@
     <title>upload-test</title>
 </head>
 <body>
-    <span>경과시간: <span id="elapsedTime"></span> ms</span>
-    <div>
-        <h1>단일파일 업로드</h1>
-        <form method="post" enctype="multipart/form-data">
-            <div>
-                file : <input type="file" name="file" id="file"/>
-            </div>
-            <input type="button" id="btnSubmit" value="단일 파일 업로드"/>
-        </form>
-    </div>
-
-    <div>
-        <h1>멀티파일 업로드</h1>
-        <form method="post" enctype="multipart/form-data" id="multipart">
-            <div>file1 : <input type="file" name="file" id="file1"/> </div>
-            <div>file2 : <input type="file" name="file" id="file2"/> </div>
-            <div>file3 : <input type="file" name="file" id="file3"/> </div>
-            <div>file4 : <input type="file" name="file" id="file4"/> </div>
-            <input type="button" id="btnSubmitMulti" value="멀티 파일 업로드"/>
-        </form>
-    </div>
-    <br>
-
+    <span>경과시간: <span id="elapsedTime"></span> ms</span> 
     <div id="image-area">
 
     </div>
 
     <div id="uploaded-area" style="border: 2px solid black;width: 100%; height:100px">
         <p>uploaded files here</p>
-        <!-- <div onclick='downloadFile("http://localhost:9000/test/download",this.innerHTML)'>mr-0.png</div> -->
-        <div onclick='viewTest(this.innerHTML)'>mr-0.png</div>
     </div>
     <div>
         <h1>멀티파일 드래그 앤 드롭 업로드</h1>
@@ -57,13 +33,68 @@
             event.preventDefault();
             const formData = new FormData()
             FileDragDropUI.uploadFiles.forEach(a=>{
-                console.log('list : ',a)
-                formData.append("file",a)
+                //console.log('list : ',a)
+                testUpload(a)
+                // 여
+                //formData.append("file",a)
             });
-            formData.forEach((a)=>console.log('formdata : ',a))
-            uploadFile("http://localhost:9000/test/upload",formData)
+            //uploadFile("http://localhost:9000/test/upload",formData)
         })
 
+        const testUpload = (file) => {
+            console.log('file : ',file)
+            const startTime = new Date().getTime();
+
+            const chunkSize = 1024 * 1024*30; // 30MB 청크
+            const totalChunks = Math.ceil(file.size/chunkSize); //
+            let currentChunk = 0;
+
+            const uploadChunk = () => {
+                const start  = currentChunk * chunkSize; //
+                const end = Math.min(start+chunkSize, file.size);
+                const chunk = file.slice(start,end)
+                console.log('chunk'+currentChunk,chunk)
+
+                const formData = new FormData();
+                formData.append('chunk', chunk);
+                formData.append('fileName', file.name);
+                formData.append('chunkIndex', currentChunk);
+                formData.append('totalChunks', totalChunks);
+
+                $.ajax({             
+                    type: "POST",          
+                    url: "http://localhost:9000/test/uploadMassive",  
+                    processData: false, // data 값을 쿼리 스트링으로 변환하지 않도록 설정
+                    contentType: false, // formdata 가 알아서 contentType 작성해줌
+                    cache: false, // 캐시 사용 안 함     
+                    data: formData,                  
+                    timeout: 600000,       
+                    success: function (data,status) {
+                        console.log('status : ',status); 
+                        currentChunk++
+                        if (currentChunk < totalChunks) {
+                            uploadChunk();
+                        }else {
+                            console.log('uploadChunk Completed!!');
+                        }
+
+                    },          
+                    error: function (e) {  
+                        console.log("ERROR : ", e);     
+                    }     
+                });
+            }
+
+
+
+            uploadChunk();
+            const endTime = new Date().getTime();
+            const elapsedTime = endTime - startTime;
+            document.getElementById("elapsedTime").textContent = elapsedTime;
+        }
+
+
+   
         const uploadFile = (url,formData) => {
             const startTime = new Date().getTime();
             $.ajax({             
@@ -79,9 +110,7 @@
                     $("#btnSubmit").prop("disabled", false);  
                     createUploadedFiles();   
                     FileDragDropUI.initialize(); 
-                    const endTime = new Date().getTime();
-                    const elapsedTime = endTime - startTime;
-                    document.getElementById("elapsedTime").textContent = elapsedTime;
+                    
                     
                 },          
                 error: function (e) {  
@@ -121,8 +150,8 @@
                 uploadedArea.appendChild(div);
             });
         };
-    
 
+        
 
     </script>
 </body>

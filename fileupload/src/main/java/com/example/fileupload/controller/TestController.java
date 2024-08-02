@@ -15,6 +15,7 @@ import java.util.Base64;
 import java.util.HashMap;
 
 import org.apache.tomcat.util.bcel.classfile.SimpleElementValue;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -81,6 +82,49 @@ public class TestController {
                 outputStream.close();
     }
 
+    @RequestMapping(value = "/test/uploadMassive", method = RequestMethod.POST)
+    public String testUploadMassive(@RequestParam("chunk") MultipartFile chunk,
+                                    @RequestParam("fileName") String fileName,
+                                    @RequestParam("chunkIndex") int chunkIndex,
+                                    @RequestParam("totalChunks") int totalChunks) {
+
+        String tmp_path = "D:/study_in_covision/vanilaHtml/file/chunks/";
+        String path = "D:/study_in_covision/vanilaHtml/file/";
+        try {
+
+            File tmp_dir = new File(tmp_path);
+            if (!tmp_dir.exists()) {
+                tmp_dir.mkdirs();
+            }
+
+            // 임시 분할 파일 저장
+            File tmp_file = new File(tmp_path+fileName+".part"+chunkIndex);
+            try (FileOutputStream fops = new FileOutputStream(tmp_file)){
+                fops.write(chunk.getBytes());
+            }
+            Thread.sleep(100); //0.1초 쉬어줌
+
+            // 모든 파일이 업로드 된 경우, 파일을 병합한다. 
+            if (chunkIndex == totalChunks - 1) {
+                File finalFile = new File(tmp_path + fileName);
+                try (FileOutputStream fops = new FileOutputStream(finalFile)){
+                    for (int i = 0; i < totalChunks; i++) {
+                        File part = new File(tmp_path + fileName + ".part" + i);
+                        fops.write(Files.readAllBytes(part.toPath()));
+                        part.delete();
+                    }
+                }
+                // ��시 파일 ��제
+                //FileUtils.deleteDirectory(tmp_dir);
+            }
+            
+            return "Chunk File" + chunkIndex + " uploaded successfully";
+
+        } catch (Exception e) {
+            System.out.println(e);
+            return "Chunk File Upload Failed";
+        }
+    };
 
     @RequestMapping(value = "/test/download", method = RequestMethod.GET)
     public void testDownload(@RequestParam("filename") String filename, HttpServletResponse response,

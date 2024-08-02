@@ -70,6 +70,7 @@ const viewFile = (url, filename) => {
                 img.style = 'width:100%;height:600px;'
             }else{
                 img = document.createElement('img');
+                img.style = 'width:100px;height:100px;'
             }
             img.src = data.url
 
